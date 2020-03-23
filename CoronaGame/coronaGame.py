@@ -8,6 +8,7 @@ win = pygame.display.set_mode((gamewidth,gameheight))
 pygame.display.set_caption("FG")
 clock = pygame.time.Clock()
 
+
 class player(object):
     speed = 2
     freeleft = True
