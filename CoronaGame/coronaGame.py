@@ -8,76 +8,90 @@ win = pygame.display.set_mode((gamewidth,gameheight))
 pygame.display.set_caption("FG")
 clock = pygame.time.Clock()
 
+allSprites = pygame.sprite.Group()
+beds_sprites = pygame.sprite.Group()
 
-class player(object):
+class player(pygame.sprite.Sprite):
     speed = 2
     freeleft = True
     freeright = True
     freeup = True
     freedown = True
-    def __init__(self,x,y,width,height):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+    def __init__(self,color, x, y,width,height):
+        # Call the parent's constructor
+        super().__init__()
+
+        # Set height, width
+        self.image = pygame.Surface([width, height])
+        self.image.fill(color)
+
+        # Make our top-left corner the passed-in location.
+        self.rect = self.image.get_rect()
+        self.rect.y = y
+        self.rect.x = x
         self.dir = 0
-        self.playerbox = (self.x,self.y,self.width,self.height)
+        self.height = height
+        self.width = width
 
-    def move(self,keys):
-        if(keys[pygame.K_UP] and self.freeup):
-            self.dir = 1
-            self.y -=self.speed
-            self.freedown = True
-            if self.y <= 0:
-                self.freeup = False
-        elif(keys[pygame.K_DOWN] and self.freedown):
-            self.dir = 2
-            self.y +=self.speed
-            self.freeup = True
-            if self.y + self.height > gameheight:
-                self.freedown = False
-        elif(keys[pygame.K_LEFT] and self.freeleft):
-            self.dir = 3
-            self.x -=self.speed
-            self.freeright = True
-            if self.x <= 0:
-                self.freeleft = False
-        elif(keys[pygame.K_RIGHT] and self.freeright):
-            self.dir = 4
-            self.x +=self.speed
-            self.freeleft = True
-            if self.x + self.width >= gamewidth:
-                self.freeright = False
+    def move(self,keys,beds):
+        freeleft = True
+        freeright = True
+        freeup = True
+        freedown = True
 
-    def drawplayer(self,win):
-        self.playerbox = (self.x,self.y,self.width,self.height)
-        pygame.draw.rect(win,(255,255,255),self.playerbox)
+        if self.rect.y <= 0:
+            freeup = False
+        if self.rect.y + self.height > gameheight:
+            freedown = False
+        if self.rect.x <= 0:
+            freeleft = False
+        if self.rect.x + self.width >= gamewidth:
+            freeright = False
         
-class Bed(object):
+        collisions = pygame.sprite.spritecollide(self, beds, False)
+        if(len(collisions) != 0):
+            if self.dir == 1:
+                freeup = False
+                self.rect.y+=self.speed
+            if self.dir == 2:
+                freedown = False
+                self.rect.y-=self.speed
+            if self.dir == 3:
+                freeleft = False
+                self.rect.x+=self.speed
+            if self.dir == 4:
+                freeright = False
+                self.rect.x-=self.speed
+                
+        if(keys[pygame.K_UP] and freeup):
+            self.dir = 1
+            self.rect.y -=self.speed
+        elif(keys[pygame.K_DOWN] and freedown):
+            self.dir = 2
+            self.rect.y +=self.speed
+        elif(keys[pygame.K_LEFT] and freeleft):
+            self.dir = 3
+            self.rect.x -=self.speed
+        elif(keys[pygame.K_RIGHT] and freeright):
+            self.dir = 4
+            self.rect.x +=self.speed
+
+        
+class Bed(pygame.sprite.Sprite):
     height = 30
     width = 20
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
-        self.bedbox = (x,y,self.width,self.height)
+    def __init__(self,color, x, y):
+        # Call the parent's constructor
+        super().__init__()
 
-    def playerclose(self,nurse):
-        if nurse.y + nurse.height > bed.y and nurse.y < bed.y + bed.height:
-            if nurse.x + nurse.width == bed.x:
-                nurse.freeright = False
-            if nurse.x == bed.x + bed.width:
-                nurse.freeleft = False
-        if nurse.x + nurse.width > bed.x and nurse.x < bed.x + bed.width:
-            if nurse.y + nurse.h == bed.y:
-                nurse.freedown = False
-            if nurse.y == bed.y + bed.height:
-                nurse.freeup = False
-        if nurse.playerbox[0]<=self.bedbox[0]+self.width+1 and nurse.playerbox[0]+nurse.playerbox[2]>=self.bedbox[0]-1:
-            if nurse.playerbox[1]+nurse.playerbox[3]<=self.bedbox[1]+self.height and nurse.playerbox[1]>=self.bedbox[1]:
-                return True
+        # Set height, width
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(color)
 
-    def drawBed(self,win):
-        pygame.draw.rect(win,(255,0,255),self.bedbox)
+        # Make our top-left corner the passed-in location.
+        self.rect = self.image.get_rect()
+        self.rect.y = y
+        self.rect.x = x
 
 def messageDisplay(text):
     largeText = pygame.font.Font('freesansbold.ttf',20)
@@ -87,9 +101,15 @@ def messageDisplay(text):
     win.blit(textSurface, TextRect)
     pygame.display.update()
 
+
+nurse = player((255,255,255),200,200,10,20)
+allSprites.add(nurse)
+beds  = [Bed((255,0,255),300,300)]
+for bed in beds:
+    allSprites.add(bed)
+    beds_sprites.add(bed)
+
 run = True
-nurse = player(200,200,10,20)
-beds  = [Bed(300,300)]
 while(run):
     clock.tick(50) 
     for event in pygame.event.get():
@@ -97,16 +117,9 @@ while(run):
             run = False
     
     keyspressed = pygame.key.get_pressed()
-    nurse.move(keyspressed)
-    win.fill((0,0,0))
-    print(1)
-    nurse.drawplayer(win)
-    
-    for bed in beds:
-        bed.drawBed(win)
-        if bed.playerclose(nurse):
-            messageDisplay("collision")
-
+    nurse.move(keyspressed,beds_sprites)
+    win.fill((0,0,0))   
+    allSprites.draw(win)
     pygame.display.update()
     
     
