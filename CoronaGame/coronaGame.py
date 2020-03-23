@@ -67,7 +67,7 @@ class Bed(object):
             if nurse.x == bed.x + bed.width:
                 nurse.freeleft = False
         if nurse.x + nurse.width > bed.x and nurse.x < bed.x + bed.width:
-            if nurse.y + nurse.h == bed.y:
+            if nurse.y + nurse.height == bed.y:
                 nurse.freedown = False
             if nurse.y == bed.y + bed.height:
                 nurse.freeup = False
