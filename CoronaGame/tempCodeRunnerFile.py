@@ -1,4 +1,2 @@
-    for bed in beds:
-        bed.drawBed(win)
-        if bed.playerclose(nurse):
-            messageDisplay("collision")
+ # self.image = pygame.Surface([width, height])
+        # self.image.fill(color)
