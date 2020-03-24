@@ -1,6 +1,7 @@
 import pygame
 import os
 import sys
+import random
 
 # set main game parameters
 pygame.init()
@@ -9,6 +10,7 @@ clock = pygame.time.Clock()
 blocksize = 50
 gameheight = blocksize*10
 gamewidth = blocksize*10
+gameTime = 60 # length of game in seconds
 win = pygame.display.set_mode((gamewidth,gameheight))
 # 
 # define colors
@@ -17,6 +19,9 @@ black = (0,0,0)
 green=(0,255,0)
 blue=(0,0,255)
 red=(255,0,0)
+base_dir = os.path.abspath(os.path.dirname(__file__))
+file_name = os.path.join(base_dir,"env","floortile.png")
+background = pygame.image.load(file_name)
 # 
 # sprite groups
 player_sprites = pygame.sprite.Group()
@@ -62,9 +67,16 @@ class player(pygame.sprite.Sprite):
             print(bed.rect.x,bed.rect.y,bed.rect.x+bed.rect.width,bed.rect.y+bed.rect.height)
             if self.rect.y>=bed.rect.y and self.rect.y<=bed.rect.y+50:
                 if self.rect.x == bed.rect.x+bed.rect.width and self.dir == 3:#nurse close to bed
-                    self.selectedColor = black
-                if self.rect.x+self.rect.width+1 == bed.rect.x and self.dir == 4:#nurse close to bed
-                    self.selectedColor = black
+                    if self.selectedColor == bed.needcolor and bed.patientAlive:
+                        self.selectedColor = black
+                        bed.needcolor = black
+                        bed.isinNeed = False
+                if self.rect.x+self.rect.width == bed.rect.x and self.dir == 4:#nurse close to bed
+                    if self.selectedColor == bed.needcolor and bed.patientAlive:
+                        self.selectedColor = black
+                        bed.needcolor = black
+                        bed.isinNeed = False
+    # when x is pressed, check if nurse is close to cupboard. If yes, teke the medicine
     def getfeed(self,listOfCupboards):
         print (self.rect.x,self.rect.y)
         for cupboard in listOfCupboards:
@@ -125,7 +137,10 @@ class player(pygame.sprite.Sprite):
             # if cupboard_sprites.has(collisions[1]):
                 # self.selectedColor = collisions[1].color
                 # print(self.selectedColor)
-        
+    def update(self):
+        if not(self.selectedColor==black):
+            pygame.draw.rect(win,self.selectedColor,(self.rect.x,self.rect.y-5,5,5))
+
 # 
 # Class for beds. All behavior of beds are defined within
 class Bed(pygame.sprite.Sprite):
@@ -134,6 +149,9 @@ class Bed(pygame.sprite.Sprite):
     width = 1*blocksize
     # default required medicine color of patient
     needcolor = black
+    needPercentage = float(0)
+    isinNeed = False
+    patientAlive = True
 
     def __init__(self, x, y):
         # Call the parent's constructor
@@ -148,8 +166,26 @@ class Bed(pygame.sprite.Sprite):
         self.rect.height = self.height-20
         # Load bed sprite image
         base_dir = os.path.abspath(os.path.dirname(__file__))
-        file_name = os.path.join(base_dir,"sprites","bed","bed_sprite.png")
-        self.image = pygame.image.load(file_name)
+        file_name = os.path.join(base_dir,"sprites","bed")
+        self.image = pygame.image.load(os.path.join(file_name,"bed_sprite.png"))
+    
+    def update(self):
+        if not(self.isinNeed):
+            self.isinNeed = random.randrange(1000)<10
+            if self.isinNeed:
+                self.needPercentage = 0
+                self.needcolor = random.choice([blue,green,red])
+        if self.isinNeed and self.needPercentage<100:
+            # Speed with which the bar fills
+            self.needPercentage += 0.2
+            pygame.draw.rect(win,white,(self.rect.x-5,self.rect.y-15,5,15))
+            pygame.draw.rect(win,self.needcolor,(self.rect.x-5,self.rect.y-15,5,(15*self.needPercentage)//100))
+        if self.needPercentage >= 100:
+            base_dir = os.path.abspath(os.path.dirname(__file__))
+            file_name = os.path.join(base_dir,"sprites","bed")
+            self.image = pygame.image.load(os.path.join(file_name,"coffin.png"))
+            self.patientAlive = False
+            beds_sprites.remove(self)
 # 
 # class for cupboards. All behavior of cupboards are defined within
 class cupboard(pygame.sprite.Sprite):
@@ -190,7 +226,8 @@ def messageDisplay(text,color,x,y,size):
     largeText = pygame.font.Font('freesansbold.ttf',size)
     textSurface = largeText.render(text, True, color)
     TextRect = textSurface.get_rect()
-    TextRect.center = (x,y)
+    TextRect.x = x
+    TextRect.y = y
     win.blit(textSurface, TextRect)
     pygame.display.update()
 # 
@@ -220,28 +257,60 @@ for cp in cupboards:
 
 
 # Main game loop  
+startticks = pygame.time.get_ticks()
 run = True
 while(run):
-    clock.tick(20) 
+    clock.tick(20)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
     
+    # move the nurse according to the keypressed. If X is pressed, take/give medicine if in right position
     keyspressed = pygame.key.get_pressed()
     nurse.move(keyspressed,beds_sprites)
-    
-    win.fill(black)   
+    #if all patients die, quit
+    if len(beds_sprites) <= 0:
+        run =False
+
+    # refresh the screen
+    win.fill(black)
+    win.blit(background,(0,0))  
+    # Display clock
+    seconds=(pygame.time.get_ticks()-startticks)//1000
+    messageDisplay(str("Doctor arrives in ")+str(gameTime-seconds)+str(" seconds"),white,0,0,15)
+    if seconds==gameTime:
+        run=False
+        gamedone=True 
     # Creating layered sprites(2.5D)
     allSpritesLayered.empty()
     for sprite in allSprites:
         allSpritesLayered.add(sprite,layer = sprite.rect.y)
     # Drawinf the sprites
     allSpritesLayered.draw(win)
+    # Draw bars above bed and selected color box above nurse
+    allSpritesLayered.update()
     # draw selected color above nurse
-    if(nurse.selectedColor!=(0,0,0)):
-        pygame.draw.rect(win,nurse.selectedColor,(nurse.rect.x,nurse.rect.y-5,5,5))
-    # 
     pygame.display.update()
     
 # 
+# Display winmessage if win
+patientsSaved = len(beds_sprites)
+if(patientsSaved!=0 and gamedone):
+    if patientsSaved == len(beds):
+        messageDisplay(str("Congratulations, you saved all patients"),white,50,gamewidth//2,20)
+    else:
+        messageDisplay(str("Congratulations, you managed to save ")+str(patientsSaved)+str(" patients"),white,20,gamewidth//2,20)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN:
+                pygame.quit()
+# 
+# Display message if lose
+if(patientsSaved == 0):
+    messageDisplay(str("All patients died"),white,150,gamewidth//2,20)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN :
+                pygame.quit()
+
 pygame.quit()
