@@ -60,7 +60,7 @@ class player(pygame.sprite.Sprite):
         print (self.rect.x,self.rect.y)
         for bed in listOfBeds:
             print(bed.rect.x,bed.rect.y,bed.rect.x+bed.rect.width,bed.rect.y+bed.rect.height)
-            if self.rect.y>bed.rect.y and self.rect.y<bed.rect.y+bed.rect.height:
+            if self.rect.y>=bed.rect.y and self.rect.y<=bed.rect.y+50:
                 if self.rect.x == bed.rect.x+bed.rect.width and self.dir == 3:#nurse close to bed
                     self.selectedColor = black
                 if self.rect.x+self.rect.width+1 == bed.rect.x and self.dir == 4:#nurse close to bed
@@ -158,11 +158,11 @@ class cupboard(pygame.sprite.Sprite):
     def __init__(self,color, x, y):
         # Call the parent's constructor
         super().__init__()
-
         # Set height, width
         self.image = pygame.Surface([self.width, self.height])
         self.color = color
         self.image.fill(color)
+
 
         # Make our top-left corner the passed-in location.
         self.rect = self.image.get_rect()
