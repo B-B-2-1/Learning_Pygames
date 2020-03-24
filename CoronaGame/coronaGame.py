@@ -220,7 +220,41 @@ class cupboard(pygame.sprite.Sprite):
         self.rect.width = self.width-10
         self.rect.height = self.height
 # 
+# class for virus.
+class virus(pygame.sprite.Sprite):
+    height = blocksize
+    width = blocksize
+    speed = blocksize//5
+    path = [(1*blocksize,5*blocksize),(8*blocksize,5*blocksize)]
+    nextpoint = path[0]
+    def __init__(self, x, y):
+       # Call the parent class (Sprite) constructor
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([self.width, self.height])
+        self.rect = self.image.get_rect()
+        self.rect.x = self.path[0][0]
+        self.rect.y = self.path[0][1]
+        self.rect.height = self.height
+        self.rect.width = self.width
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        file_name = os.path.join(base_dir,"sprites","virus")
+        self.image = pygame.image.load(os.path.join(file_name,"virus.png"))
 
+    def update(self):
+        if (self.nextpoint==(self.rect.x,self.rect.y)):
+            incr = random.choice([1,len(self.path)-1])
+            self.nextpoint = self.path[(self.path.index((self.rect.x,self.rect.y))+incr)%len(self.path)]
+            
+        else:
+            if self.rect.x < self.nextpoint[0]:
+                self.rect.x += self.speed
+            elif self.rect.x > self.nextpoint[0]:
+                self.rect.x -= self.speed
+            if self.rect.y < self.nextpoint[1]:
+                self.rect.y += self.speed
+            elif self.rect.y > self.nextpoint[1]:
+                self.rect.y -= self.speed
+        
 # function to display any message text
 def messageDisplay(text,color,x,y,size):
     largeText = pygame.font.Font('freesansbold.ttf',size)
@@ -254,7 +288,9 @@ cupboards = [cupboard(red,blocksize*2,gameheight-blocksize),
 for cp in cupboards:
     allSprites.add(cp)
     cupboard_sprites.add(cp) 
-
+# Virus
+virus = virus(blocksize,blocksize)
+allSprites.add(virus)
 
 # Main game loop  
 startticks = pygame.time.get_ticks()
@@ -287,6 +323,13 @@ while(run):
         allSpritesLayered.add(sprite,layer = sprite.rect.y)
     # Drawinf the sprites
     allSpritesLayered.draw(win)
+    # Boxes and grid
+    for i in range(0,500,50):
+        pygame.draw.line(win,white,(i,0),(i,500))
+    for i in range(0,500,50):
+        pygame.draw.line(win,white,(0,i),(500,i))
+    for sprite in allSpritesLayered:
+        pygame.draw.rect(win,red,sprite.rect,1)
     # Draw bars above bed and selected color box above nurse
     allSpritesLayered.update()
     # draw selected color above nurse
