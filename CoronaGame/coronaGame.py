@@ -25,6 +25,7 @@ background = pygame.image.load(file_name)
 # 
 # sprite groups
 player_sprites = pygame.sprite.Group()
+virus_sprites = pygame.sprite.Group()
 allSprites = pygame.sprite.Group()
 beds_sprites = pygame.sprite.Group()
 cupboard_sprites = pygame.sprite.Group()
@@ -41,6 +42,8 @@ class player(pygame.sprite.Sprite):
     freeright = True
     freeup = True
     freedown = True
+    # is dead yet?
+    dead = False
     # path to sprite images
     base_dir = os.path.abspath(os.path.dirname(__file__))
     file_name = os.path.join(base_dir,"sprites","nurse")
@@ -92,7 +95,6 @@ class player(pygame.sprite.Sprite):
         freeright = True
         freeup = True
         freedown = True
-
         if self.rect.y <= 0:
             freeup = False
         if self.rect.y + self.spriteHeight >= gameheight:
@@ -134,9 +136,10 @@ class player(pygame.sprite.Sprite):
                 self.rect.x+=self.speed
             if self.dir == 4:
                 self.rect.x-=self.speed
-            # if cupboard_sprites.has(collisions[1]):
-                # self.selectedColor = collisions[1].color
-                # print(self.selectedColor)
+            if virus_sprites.has(collisions[1]):
+                collisions[1].kill()
+                self.dead = True
+                
     def update(self):
         if not(self.selectedColor==black):
             pygame.draw.rect(win,self.selectedColor,(self.rect.x,self.rect.y-5,5,5))
@@ -225,32 +228,42 @@ class virus(pygame.sprite.Sprite):
     height = blocksize
     width = blocksize
     speed = blocksize//5
-    path = [(1*blocksize,5*blocksize),(8*blocksize,5*blocksize)]
-    nextpoint = path[0]
-    def __init__(self, x, y):
+    path = []
+    def __init__(self,p):
        # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([self.width, self.height])
         self.rect = self.image.get_rect()
-        self.rect.x = self.path[0][0]
-        self.rect.y = self.path[0][1]
         self.rect.height = self.height
         self.rect.width = self.width
         base_dir = os.path.abspath(os.path.dirname(__file__))
         file_name = os.path.join(base_dir,"sprites","virus")
         self.image = pygame.image.load(os.path.join(file_name,"virus.png"))
+        self.path = []
+        for i in p:
+            self.path.append((i[0]*blocksize,i[1]*blocksize))
+        print(self.path)
+        self.nextpoint = self.path[0]
+        self.rect.x = self.path[0][0]
+        self.rect.y = self.path[0][1]
 
     def update(self):
         if (self.nextpoint==(self.rect.x,self.rect.y)):
-            incr = random.choice([1,len(self.path)-1])
-            self.nextpoint = self.path[(self.path.index((self.rect.x,self.rect.y))+incr)%len(self.path)]
-            
+            if self.path.index((self.rect.x,self.rect.y))==0:
+                self.nextpoint = self.path[1]
+            elif self.path.index((self.rect.x,self.rect.y))>=len(self.path)-1:
+                self.nextpoint = self.path[len(self.path)-2]
+            else:
+                incr = random.choice([1,1,1,-1,-1,-1])
+                self.nextpoint = self.path[self.path.index((self.rect.x,self.rect.y))+incr]
+            print(self.nextpoint)
+
         else:
             if self.rect.x < self.nextpoint[0]:
                 self.rect.x += self.speed
             elif self.rect.x > self.nextpoint[0]:
                 self.rect.x -= self.speed
-            if self.rect.y < self.nextpoint[1]:
+            elif self.rect.y < self.nextpoint[1]:
                 self.rect.y += self.speed
             elif self.rect.y > self.nextpoint[1]:
                 self.rect.y -= self.speed
@@ -289,11 +302,14 @@ for cp in cupboards:
     allSprites.add(cp)
     cupboard_sprites.add(cp) 
 # Virus
-virus = virus(blocksize,blocksize)
-allSprites.add(virus)
+virus1 = virus([(1,3),(3,3),(5,3),(7,3),(9,3)])
+virus2 = virus([(1,6),(3,6),(5,6),(7,6),(9,6)])
+allSprites.add(virus1,virus2)
+virus_sprites.add(virus1,virus2)
 
 # Main game loop  
 startticks = pygame.time.get_ticks()
+gamedone = False
 run = True
 while(run):
     clock.tick(20)
@@ -321,7 +337,11 @@ while(run):
     allSpritesLayered.empty()
     for sprite in allSprites:
         allSpritesLayered.add(sprite,layer = sprite.rect.y)
-    # Drawinf the sprites
+    # check if nurse dead
+    if (nurse.dead):
+        nurse.image = pygame.image.load(os.path.join(nurse.file_name,"nurse_dead.png"))
+        run = False
+    # Drawing the sprites
     allSpritesLayered.draw(win)
     # Boxes and grid
     for i in range(0,500,50):
@@ -349,8 +369,15 @@ if(patientsSaved!=0 and gamedone):
                 pygame.quit()
 # 
 # Display message if lose
-if(patientsSaved == 0):
+elif(patientsSaved == 0):
     messageDisplay(str("All patients died"),white,150,gamewidth//2,20)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN :
+                pygame.quit()
+# player died
+elif nurse.dead:
+    messageDisplay(str("The nurse died bravely"),white,150,gamewidth//2,20)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.KEYDOWN :
