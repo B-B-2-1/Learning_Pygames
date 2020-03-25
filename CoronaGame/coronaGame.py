@@ -238,7 +238,7 @@ class virus(pygame.sprite.Sprite):
         self.rect.width = self.width
         base_dir = os.path.abspath(os.path.dirname(__file__))
         file_name = os.path.join(base_dir,"sprites","virus")
-        self.image = pygame.image.load(os.path.join(file_name,"virus.png"))
+        self.image = pygame.image.load(os.path.join(file_name,"virus50.png"))
         self.path = []
         for i in p:
             self.path.append((i[0]*blocksize,i[1]*blocksize))
