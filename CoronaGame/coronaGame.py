@@ -20,8 +20,30 @@ green=(0,255,0)
 blue=(0,0,255)
 red=(255,0,0)
 base_dir = os.path.abspath(os.path.dirname(__file__))
-file_name = os.path.join(base_dir,"env","hospitalBG.png")
-background = pygame.image.load(file_name)
+file_nameBG = os.path.join(base_dir,"env","hospitalBG.png")
+background = pygame.image.load(file_nameBG)
+congotext = pygame.image.load(os.path.join(base_dir,"env","congoText.png"))
+okText = pygame.image.load(os.path.join(base_dir,"env","okText.png"))
+badText = pygame.image.load(os.path.join(base_dir,"env","alldead.png"))
+deadtext = pygame.image.load(os.path.join(base_dir,"env","DeadText.png"))
+bedIMG = pygame.image.load(os.path.join(base_dir,"sprites","bed","bed_sprite.png"))
+coffinIMG = pygame.image.load(os.path.join(base_dir,"sprites","bed","coffin.png"))
+virusIMG = pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50.png"))
+cupboardIMG_arr = [pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_white.png")),
+                   pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_green.png")),
+                   pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_red.png")),
+                   pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_blue.png"))]
+# 
+folderN = os.path.join(base_dir,"sprites","nurse")
+nurse_left_img = [pygame.image.load(os.path.join(folderN,"NJL1.gif")),pygame.image.load(os.path.join(folderN,"NJL2.gif")),
+                pygame.image.load(os.path.join(folderN,"NJL3.png")),pygame.image.load(os.path.join(folderN,"NJL4.gif"))]
+nurse_right_img = [pygame.image.load(os.path.join(folderN,"NJR1.gif")),pygame.image.load(os.path.join(folderN,"NJR2.gif")),
+                pygame.image.load(os.path.join(folderN,"NJR3.gif")),pygame.image.load(os.path.join(folderN,"NJR4.gif"))]
+nurse_up_img = [pygame.image.load(os.path.join(folderN,"NJU1.gif")),pygame.image.load(os.path.join(folderN,"NJU2.gif")),
+                pygame.image.load(os.path.join(folderN,"NJU3.gif")),pygame.image.load(os.path.join(folderN,"NJU4.gif"))]
+nurse_down_img = [pygame.image.load(os.path.join(folderN,"NJD1.png")),pygame.image.load(os.path.join(folderN,"NJD2.gif")),
+                pygame.image.load(os.path.join(folderN,"NJD3.gif")),pygame.image.load(os.path.join(folderN,"NJD4.gif"))]
+nurse_img_arr = [nurse_up_img,nurse_down_img,nurse_left_img,nurse_right_img]
 # 
 
 # Player class. All behavior of player is inside this class
@@ -41,7 +63,9 @@ class player(pygame.sprite.Sprite):
         self.image = pygame.Surface([self.spriteWidth, self.spriteHeight])
         # Make our top-left corner the passed-in location.
         self.rect = self.image.get_rect()
-        self.image = pygame.image.load(os.path.join(self.file_name,"nurses_d.png"))
+        # self.image = pygame.image.load(os.path.join(self.file_name,"nurses_d.png"))
+        self.currImgArr = nurse_img_arr[1]
+        self.image = self.currImgArr[0]
         self.rect.y = y
         self.rect.x = x
         self.rect.width = self.spriteWidth-10
@@ -49,6 +73,7 @@ class player(pygame.sprite.Sprite):
         # player speed and direction
         self.speed = blocksize//10
         self.dir = 0
+        self.stepcount = 0
         # movement constraints
         self.freeleft = True
         self.freeright = True
@@ -101,26 +126,44 @@ class player(pygame.sprite.Sprite):
             freeright = False
         
         # Move according to keys. If collision detected, we will reverse the move in the next block 
+        oldDir = self.dir
         if(keys[pygame.K_UP] and freeup):
             self.dir = 1
-            self.rect.y -=self.speed
-            self.image = pygame.image.load(os.path.join(self.file_name,"nurses_u.png"))
+            if self.dir == oldDir:
+                self.rect.y -=self.speed
+            else:
+                self.currImgArr = nurse_img_arr[self.dir-1]
+                self.stepcount=0
+            self.image = self.currImgArr[self.stepcount//4]
         elif(keys[pygame.K_DOWN] and freedown):
             self.dir = 2
-            self.rect.y +=self.speed
-            self.image = pygame.image.load(os.path.join(self.file_name,"nurses_d.png"))
+            if self.dir == oldDir:
+                self.rect.y +=self.speed
+            else:
+                self.currImgArr = nurse_img_arr[self.dir-1]
+                self.stepcount=0
+            self.image = self.currImgArr[self.stepcount//4]
         elif(keys[pygame.K_LEFT] and freeleft):
             self.dir = 3
-            self.rect.x -=self.speed
-            self.image = pygame.image.load(os.path.join(self.file_name,"nurses_l.png"))
+            if self.dir == oldDir:
+                self.rect.x -=self.speed
+            else:
+                self.currImgArr = nurse_img_arr[self.dir-1]
+                self.stepcount=0
+            self.image = self.currImgArr[self.stepcount//4]
         elif(keys[pygame.K_RIGHT] and freeright):
             self.dir = 4
-            self.rect.x +=self.speed
-            self.image = pygame.image.load(os.path.join(self.file_name,"nurses_r.png"))
+            if self.dir == oldDir:
+                self.rect.x +=self.speed
+            else:
+                self.currImgArr = nurse_img_arr[self.dir-1]
+                self.stepcount=0
+            self.image = self.currImgArr[self.stepcount//4]
         if(keys[pygame.K_x]):
             self.feed(beds_sprites)
             self.getfeed(cupboard_sprites)
 
+        self.stepcount = (self.stepcount+1)%16
         # reversing move if collision detected
         collisions = pygame.sprite.spritecollide(self, allSprites, False)
         if(len(collisions) != 1):
@@ -158,10 +201,7 @@ class Bed(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.width = self.width-10
         self.rect.height = self.height-25
-        # Load bed sprite image
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        file_name = os.path.join(base_dir,"sprites","bed")
-        self.image = pygame.image.load(os.path.join(file_name,"bed_sprite.png"))
+        self.image = bedIMG
         # default required medicine color of patient
         self.needcolor = black
         self.needPercentage = float(0)
@@ -181,9 +221,7 @@ class Bed(pygame.sprite.Sprite):
             pygame.draw.rect(win,self.needcolor,(self.rect.x-5,self.rect.y-15,5,(15*self.needPercentage)//100))
             pygame.draw.rect(win,black,(self.rect.x-5,self.rect.y-15,5,15),1)
         if self.needPercentage >= 100:
-            base_dir = os.path.abspath(os.path.dirname(__file__))
-            file_name = os.path.join(base_dir,"sprites","bed")
-            self.image = pygame.image.load(os.path.join(file_name,"coffin.png"))
+            self.image = coffinIMG
             self.patientAlive = False
             beds_sprites.remove(self)
 # 
@@ -204,17 +242,14 @@ class cupboard(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.y = y
         self.rect.x = x
-        # loading sprites for cupboard according to color
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        file_name = os.path.join(base_dir,"sprites","cupboard")
         if self.color == white:
-            self.image = pygame.image.load(os.path.join(file_name,"cupboard_white.png"))
+            self.image = cupboardIMG_arr[0]
         elif self.color == green:
-            self.image = pygame.image.load(os.path.join(file_name,"cupboard_green.png"))
+            self.image = cupboardIMG_arr[1]
         elif self.color == red:
-            self.image = pygame.image.load(os.path.join(file_name,"cupboard_red.png"))
+            self.image = cupboardIMG_arr[2]
         elif self.color == blue:
-            self.image = pygame.image.load(os.path.join(file_name,"cupboard_blue.png"))
+            self.image = cupboardIMG_arr[3]
 
 
         self.rect.width = self.width-10
@@ -233,9 +268,7 @@ class virus(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.height = self.height-25
         self.rect.width = self.width
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        file_name = os.path.join(base_dir,"sprites","virus")
-        self.image = pygame.image.load(os.path.join(file_name,"virus50.png"))
+        self.image = virusIMG
         self.path = []
         for i in p:
             self.path.append((i[0]*blocksize,i[1]*blocksize))
@@ -378,9 +411,6 @@ while rungame:
         allSpritesLayered.update()
         # draw selected color above nurse
         pygame.display.update()
-        if not(run):    
-            pygame.image.save(win,"sc.png")
-            print("image saved")
     # Game Loop Over   
     # 
     #
@@ -390,24 +420,20 @@ while rungame:
     if(patientsSaved!=0 and gamedDone):
         print("quiting")
         if patientsSaved == len(beds):
-            congotext = pygame.image.load("D:\Projects and Codes and Learning\Pygame_project\Learning_Pygames\CoronaGame\env\congoText.png")
             win.blit(congotext,(100,150))
             pygame.display.update()
         else:
-            okText = pygame.image.load("D:\Projects and Codes and Learning\Pygame_project\Learning_Pygames\CoronaGame\env\okText.png")
             win.blit(okText,(80,150))
             pygame.display.update()
         quitmenu()
     # 
     # Display message if lose
     elif(patientsSaved == 0):
-        okText = pygame.image.load("D:\Projects and Codes and Learning\Pygame_project\Learning_Pygames\CoronaGame\env\alldead.png")
-        win.blit(okText,(50,150))
+        win.blit(badText,(50,150))
         pygame.display.update()
         quitmenu()
     # player died
     elif nurse.dead:
-        deadtext = pygame.image.load("D:\Projects and Codes and Learning\Pygame_project\Learning_Pygames\CoronaGame\env\DeadText.png")
         win.blit(deadtext,(80,150))
         pygame.display.update()
         quitmenu()
