@@ -21,6 +21,7 @@ blue=(0,0,255)
 red=(255,0,0)
 virusSpeedarr = [blocksize//20,blocksize//10,blocksize//5]
 bedbarSpeedarr = [0.1,0.2,0.2]
+# Loading images
 base_dir = os.path.abspath(os.path.dirname(__file__))
 file_nameBG = os.path.join(base_dir,"env","hospitalBG.png")
 background = pygame.image.load(file_nameBG)
@@ -36,6 +37,11 @@ cupboardIMG_arr = [pygame.image.load(os.path.join(base_dir,"sprites","cupboard",
                    pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_green.png")),
                    pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_red.png")),
                    pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_blue.png"))]
+handwashIMGarr = [pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw1.png")),
+                  pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw2.png")),
+                  pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw3.png")),
+                  pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw4.png")),]
+powerupIMGarr = [handwashIMGarr]
 # 
 folderN = os.path.join(base_dir,"sprites","nurse")
 nurse_left_img = [pygame.image.load(os.path.join(folderN,"NJL1.gif")),pygame.image.load(os.path.join(folderN,"NJL2.gif")),
@@ -115,6 +121,7 @@ class player(pygame.sprite.Sprite):
             
     # function for moving the nurse. its a bit comple. It includes collision detection
     def move(self,keys,beds):
+        global curr_powerup
         freeleft = True
         freeright = True
         freeup = True
@@ -178,6 +185,9 @@ class player(pygame.sprite.Sprite):
                 self.rect.x+=self.speed
             if self.dir == 4:
                 self.rect.x-=self.speed
+            if powerup_sprites.has(collisions[1]):
+                curr_powerup = collisions[1].typ
+                collisions[1].kill()
             if virus_sprites.has(collisions[1]):
                 collisions[1].kill()
                 self.dead = True
@@ -263,6 +273,7 @@ class cupboard(pygame.sprite.Sprite):
 class virus(pygame.sprite.Sprite):
     height = blocksize
     width = blocksize
+    global curr_powerup
     def __init__(self,p,gameMode):
        # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
@@ -291,7 +302,7 @@ class virus(pygame.sprite.Sprite):
                 self.nextpoint = self.path[self.path.index((self.rect.x,self.rect.y))+incr]
             # print(self.nextpoint)
 
-        else:
+        elif curr_powerup != 0:
             if self.rect.x < self.nextpoint[0]:
                 self.rect.x += self.speed
             elif self.rect.x > self.nextpoint[0]:
@@ -300,7 +311,35 @@ class virus(pygame.sprite.Sprite):
                 self.rect.y += self.speed
             elif self.rect.y > self.nextpoint[1]:
                 self.rect.y -= self.speed
-        
+#
+# class for powerups
+class powerup(pygame.sprite.Sprite):
+    height = blocksize
+    width = blocksize
+    def __init__(self,typ,x,y,appeartime,dissappeartime):
+        super().__init__()
+        self.typ = typ
+        self.appeartime = appeartime
+        self.dissappeartime = dissappeartime
+        self.image = pygame.Surface([self.width, self.height])
+        self.rect = self.image.get_rect()
+        self.rect.y = y
+        self.rect.x = x
+        self.rect.width = self.width-10
+        self.rect.height = self.height-25
+        self.imagearr = powerupIMGarr[self.typ%(len(powerupIMGarr))]
+        self.imgstate = 0
+        self.image =self.imagearr[self.imgstate]
+        self.incr = 1
+
+    def update(self):
+        if self.imgstate==0:
+            self.incr=1
+        if self.imgstate==15:
+            self.incr=-1
+        self.image = self.imagearr[self.imgstate//4]
+        self.imgstate +=self.incr
+
 # function to display any message text
 def messageDisplay(text,color,x,y,size):
     largeText = pygame.font.Font('freesansbold.ttf',size)
@@ -384,6 +423,7 @@ while rungame:
     allSprites = pygame.sprite.Group()
     beds_sprites = pygame.sprite.Group()
     cupboard_sprites = pygame.sprite.Group()
+    powerup_sprites = pygame.sprite.Group()
     allSpritesLayered = pygame.sprite.LayeredUpdates()
     # 
     ##############################################Level Design#####################################################
@@ -401,6 +441,9 @@ while rungame:
     #4. Virus
     virus1 = virus([(1,3),(3,3),(5,3),(7,3),(8,3)],gameMode)
     virus2 = virus([(1,6),(3,6),(5,6),(7,6),(8,6)],gameMode)
+
+    #5.powerups
+    hanwash = powerup(0,1*blocksize,4*blocksize,5,60)
     ###################################################Level Design over##############################################
     
     nurse.add(player_sprites,allSprites)
@@ -410,10 +453,11 @@ while rungame:
         cp.add(cupboard_sprites,allSprites) 
     allSprites.add(virus1,virus2)
     virus_sprites.add(virus1,virus2)
-
+    hanwash.add(powerup_sprites)
     # Game loop  
     startticks = pygame.time.get_ticks()
     gamedDone = False
+    curr_powerup = -1
     while(run):
         clock.tick(20)
         for event in pygame.event.get():
@@ -452,11 +496,24 @@ while rungame:
         # for i in range(0,500,50):
         #     pygame.draw.line(win,white,(i,0),(i,500))
         # for i in range(0,500,50):
-        # #     pygame.draw.line(win,white,(0,i),(500,i))
-        # for sprite in allSpritesLayered:
-        #     pygame.draw.rect(win,red,sprite.rect,1)
+        #     pygame.draw.line(win,white,(0,i),(500,i))
+        for sprite in allSpritesLayered:
+            pygame.draw.rect(win,red,sprite.rect,1)
         # Draw bars above bed and selected color box above nurse
         allSpritesLayered.update()
+        
+        for p_ups in powerup_sprites:
+            if pygame.time.get_ticks()-startticks>=p_ups.appeartime*1000:
+                p_ups.appeartime = gameTime+10
+                allSprites.add(p_ups)
+            if pygame.time.get_ticks()-startticks>=p_ups.dissappeartime*1000:
+                p_ups.kill()
+            
+        if curr_powerup==-1:
+            poweruptime = pygame.time.get_ticks()
+        elif pygame.time.get_ticks()-poweruptime>10000:
+            curr_powerup = -1
+            
         # draw selected color above nurse
         pygame.display.update()
     # Game Loop Over   
