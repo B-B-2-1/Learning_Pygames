@@ -19,9 +19,12 @@ black = (0,0,0)
 green=(0,255,0)
 blue=(0,0,255)
 red=(255,0,0)
+virusSpeedarr = [blocksize//20,blocksize//10,blocksize//5]
+bedbarSpeedarr = [0.1,0.2,0.2]
 base_dir = os.path.abspath(os.path.dirname(__file__))
 file_nameBG = os.path.join(base_dir,"env","hospitalBG.png")
 background = pygame.image.load(file_nameBG)
+menuBG = pygame.image.load(os.path.join(base_dir,"env","menuBG.png"))
 congotext = pygame.image.load(os.path.join(base_dir,"env","congoText.png"))
 okText = pygame.image.load(os.path.join(base_dir,"env","okText.png"))
 badText = pygame.image.load(os.path.join(base_dir,"env","alldead.png"))
@@ -209,6 +212,7 @@ class Bed(pygame.sprite.Sprite):
         self.patientAlive = True
     
     def update(self):
+        global gameMode
         if not(self.isinNeed):
             self.isinNeed = random.randrange(1000)<10
             if self.isinNeed:
@@ -216,7 +220,7 @@ class Bed(pygame.sprite.Sprite):
                 self.needcolor = random.choice([blue,green,red])
         if self.isinNeed and self.needPercentage<100:
             # Speed with which the bar fills
-            self.needPercentage += 0.2
+            self.needPercentage += bedbarSpeedarr[gameMode]
             pygame.draw.rect(win,white,(self.rect.x-5,self.rect.y-15,5,15))
             pygame.draw.rect(win,self.needcolor,(self.rect.x-5,self.rect.y-15,5,(15*self.needPercentage)//100))
             pygame.draw.rect(win,black,(self.rect.x-5,self.rect.y-15,5,15),1)
@@ -259,9 +263,7 @@ class cupboard(pygame.sprite.Sprite):
 class virus(pygame.sprite.Sprite):
     height = blocksize
     width = blocksize
-    speed = blocksize//10
-    path = []
-    def __init__(self,p):
+    def __init__(self,p,gameMode):
        # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface([self.width, self.height])
@@ -276,6 +278,7 @@ class virus(pygame.sprite.Sprite):
         self.nextpoint = self.path[0]
         self.rect.x = self.path[0][0]
         self.rect.y = self.path[0][1]
+        self.speed = virusSpeedarr[gameMode]
 
     def update(self):
         if (self.nextpoint==(self.rect.x,self.rect.y)):
@@ -311,6 +314,8 @@ def messageDisplay(text,color,x,y,size):
 # Quitmenu
 def quitmenu():
     global rungame
+    global displayMenu
+    global run
     doquit = True
     while doquit:
         for event in pygame.event.get():
@@ -320,15 +325,59 @@ def quitmenu():
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
-                    rungame = False
-                    pygame.quit()
-                    sys.exit()
+                    # rungame = False
+                    # pygame.quit()
+                    # sys.exit()
+                    displayMenu = True
+                    doquit = False
                 elif event.key == pygame.K_r:
                     doquit = False
+                    run = True
 
 # Main loop including menu. Game loop is inside this main loop
+
+displayMenu = True
 rungame = True
+run = True
 while rungame:
+
+    menuitemnum = 0
+    gameMode = 0
+    while(displayMenu):
+        clock.tick(10)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                rungame = False
+                run = False
+                displayMenu = False
+        keyspressed = pygame.key.get_pressed()
+        if keyspressed[pygame.K_DOWN]:
+            menuitemnum = (menuitemnum+1)%4
+        if keyspressed[pygame.K_UP]:
+            menuitemnum = (menuitemnum+3)%4
+        if keyspressed[pygame.K_x]:
+            if menuitemnum == 0:
+                displayMenu = False
+                gameMode = 0
+                run = True
+            if menuitemnum == 1:
+                displayMenu = False
+                gameMode = 1
+                run = True
+            if menuitemnum == 2:
+                displayMenu = False
+                gameMode = 2
+                run = True
+            if menuitemnum == 3:
+                rungame = False
+                run = False
+                displayMenu = False        
+        win.blit(menuBG,(0,0))
+        menuitems = [(125,100,25,25),(125,175,25,25),(125,250,25,25),(125,325,25,25)]
+        pygame.draw.rect(win,blue,menuitems[menuitemnum])
+        pygame.display.update()
+        pygame.event.wait()
+   
     # sprite groups
     player_sprites = pygame.sprite.Group()
     virus_sprites = pygame.sprite.Group()
@@ -337,35 +386,34 @@ while rungame:
     cupboard_sprites = pygame.sprite.Group()
     allSpritesLayered = pygame.sprite.LayeredUpdates()
     # 
-    # Now creatig nurse and beds and cupboards
-    # nurse
+    ##############################################Level Design#####################################################
+    #1. nurse
     nurse = player(200,200)
-    nurse.add(player_sprites,allSprites)
-    # player_sprites.add(nurse)
-    # allSprites.add(nurse)
-    # beds
+    #2. beds
     beds  = [Bed((blocksize)*2,(blocksize)*1),
         Bed((blocksize)*4,(blocksize)*1),
         Bed((blocksize)*6,(blocksize)*1),   
         Bed((blocksize)*8,(blocksize)*1)]
-    for bed in beds:
-        bed.add(beds_sprites,allSprites)
-    # cupboards
+    #3. cupboards
     cupboards = [cupboard(red,blocksize*1.5,gameheight-blocksize-25),
             cupboard(blue,blocksize*4.5,gameheight-blocksize-25),
             cupboard(green,blocksize*7.5,gameheight-blocksize-25)]
+    #4. Virus
+    virus1 = virus([(1,3),(3,3),(5,3),(7,3),(8,3)],gameMode)
+    virus2 = virus([(1,6),(3,6),(5,6),(7,6),(8,6)],gameMode)
+    ###################################################Level Design over##############################################
+    
+    nurse.add(player_sprites,allSprites)
+    for bed in beds:
+        bed.add(beds_sprites,allSprites)
     for cp in cupboards:
         cp.add(cupboard_sprites,allSprites) 
-    # Virus
-    virus1 = virus([(1,3),(3,3),(5,3),(7,3),(8,3)])
-    virus2 = virus([(1,6),(3,6),(5,6),(7,6),(8,6)])
     allSprites.add(virus1,virus2)
     virus_sprites.add(virus1,virus2)
 
     # Game loop  
     startticks = pygame.time.get_ticks()
     gamedDone = False
-    run = True
     while(run):
         clock.tick(20)
         for event in pygame.event.get():
