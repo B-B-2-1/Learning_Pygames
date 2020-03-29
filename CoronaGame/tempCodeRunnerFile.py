@@ -1,3 +1,1 @@
-
-        for sprite in allSpritesLayered:
-            pygame.draw.rect(win,red,sprite.rect,1)
+global curr_powerup

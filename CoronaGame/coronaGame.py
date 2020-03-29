@@ -21,6 +21,7 @@ blue=(0,0,255)
 red=(255,0,0)
 virusSpeedarr = [blocksize//20,blocksize//10,blocksize//5]
 bedbarSpeedarr = [0.1,0.2,0.2]
+curr_powerup = -1
 # Loading images
 base_dir = os.path.abspath(os.path.dirname(__file__))
 file_nameBG = os.path.join(base_dir,"env","hospitalBG.png")
@@ -50,6 +51,8 @@ maskIMGarr = [pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask
               pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","msk3.png")),
               pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","msk4.png")),]
 powerupIMGarr = [handwashIMGarr,maskIMGarr]
+powerupThumbnailIMG = [pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hwt.png")),
+                       pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","mskt.png"))]
 # 
 folderN = os.path.join(base_dir,"sprites","nurse")
 nurse_left_img = [pygame.image.load(os.path.join(folderN,"NJL1.gif")),pygame.image.load(os.path.join(folderN,"NJL2.gif")),
@@ -206,6 +209,9 @@ class player(pygame.sprite.Sprite):
     def update(self):
         if not(self.selectedColor==black):
             pygame.draw.rect(win,self.selectedColor,(self.rect.x,self.rect.y-5,5,5))
+        global curr_powerup
+        if curr_powerup != -1:
+            win.blit(powerupThumbnailIMG[curr_powerup],(self.rect.right,self.rect.top-10))
 
 # 
 # Class for beds. All behavior of beds are defined within
@@ -394,9 +400,9 @@ while rungame:
     menuitemnum = 0
     gameMode = 0
     while(displayMenu):
-        clock.tick(10)
-        for event in pygame.event.get():
+        for event in [pygame.event.wait()]:
             if event.type == pygame.QUIT:
+                print("quit")
                 rungame = False
                 run = False
                 displayMenu = False
@@ -426,7 +432,6 @@ while rungame:
         menuitems = [(125,100,25,25),(125,175,25,25),(125,250,25,25),(125,325,25,25)]
         pygame.draw.rect(win,blue,menuitems[menuitemnum])
         pygame.display.update()
-        pygame.event.wait()
    
     # sprite groups
     player_sprites = pygame.sprite.Group()
