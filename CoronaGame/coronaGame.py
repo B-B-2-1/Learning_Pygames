@@ -35,7 +35,11 @@ bedIMG = [pygame.image.load(os.path.join(base_dir,"sprites","bed","bed1.png")),
           pygame.image.load(os.path.join(base_dir,"sprites","bed","bed2.png")),
           pygame.image.load(os.path.join(base_dir,"sprites","bed","bed3.png")),
           pygame.image.load(os.path.join(base_dir,"sprites","bed","bed4.png")),
-          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed5.png")),]
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed5.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed6.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed7.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed8.png")),]
+usedbedIMG = []
 coffinIMG = pygame.image.load(os.path.join(base_dir,"sprites","bed","coffin.png"))
 virusIMG = pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50.png"))
 cupboardIMG_arr = [pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_white.png")),
@@ -231,7 +235,13 @@ class Bed(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.width = self.width-10
         self.rect.height = self.height-25
-        self.image = random.choice(bedIMG)
+        global usedbedIMG
+        while True:
+            self.image = random.choice(bedIMG)
+            if usedbedIMG.count(self.image)<=0:
+                break
+
+        usedbedIMG.append(self.image)
         # default required medicine color of patient
         self.needcolor = black
         self.needPercentage = float(0)
@@ -445,7 +455,8 @@ while rungame:
     ##############################################Level Design#####################################################
     #1. nurse
     nurse = player(200,200)
-    #2. beds
+    #2. beds Max 8 beds as there are only 8 spriteimages
+    #   If you want to add more beds than 8, comment out the line 'usedbedIMG.append(self.image)' in bed class __init__ function
     beds  = [Bed((blocksize)*2,(blocksize)*1),
         Bed((blocksize)*4,(blocksize)*1),
         Bed((blocksize)*6,(blocksize)*1),   
@@ -475,6 +486,8 @@ while rungame:
     startticks = pygame.time.get_ticks()
     gamedDone = False
     curr_powerup = -1
+    # This below statement it to avoid using same bed sprite image for all patients
+    usedbedIMG = []
     while(run):
         clock.tick(20)
         for event in pygame.event.get():
