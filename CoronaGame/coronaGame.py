@@ -30,7 +30,11 @@ congotext = pygame.image.load(os.path.join(base_dir,"env","congoText.png"))
 okText = pygame.image.load(os.path.join(base_dir,"env","okText.png"))
 badText = pygame.image.load(os.path.join(base_dir,"env","alldead.png"))
 deadtext = pygame.image.load(os.path.join(base_dir,"env","DeadText.png"))
-bedIMG = pygame.image.load(os.path.join(base_dir,"sprites","bed","bed_sprite.png"))
+bedIMG = [pygame.image.load(os.path.join(base_dir,"sprites","bed","bed1.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed2.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed3.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed4.png")),
+          pygame.image.load(os.path.join(base_dir,"sprites","bed","bed5.png")),]
 coffinIMG = pygame.image.load(os.path.join(base_dir,"sprites","bed","coffin.png"))
 virusIMG = pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50.png"))
 cupboardIMG_arr = [pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_white.png")),
@@ -41,7 +45,11 @@ handwashIMGarr = [pygame.image.load(os.path.join(base_dir,"sprites","powerups","
                   pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw2.png")),
                   pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw3.png")),
                   pygame.image.load(os.path.join(base_dir,"sprites","powerups","handwash","hw4.png")),]
-powerupIMGarr = [handwashIMGarr]
+maskIMGarr = [pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","msk1.png")),
+              pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","msk2.png")),
+              pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","msk3.png")),
+              pygame.image.load(os.path.join(base_dir,"sprites","powerups","mask","msk4.png")),]
+powerupIMGarr = [handwashIMGarr,maskIMGarr]
 # 
 folderN = os.path.join(base_dir,"sprites","nurse")
 nurse_left_img = [pygame.image.load(os.path.join(folderN,"NJL1.gif")),pygame.image.load(os.path.join(folderN,"NJL2.gif")),
@@ -177,20 +185,23 @@ class player(pygame.sprite.Sprite):
         # reversing move if collision detected
         collisions = pygame.sprite.spritecollide(self, allSprites, False)
         if(len(collisions) != 1):
-            if self.dir == 1:
-                self.rect.y+=self.speed
-            if self.dir == 2:
-                self.rect.y-=self.speed
-            if self.dir == 3:
-                self.rect.x+=self.speed
-            if self.dir == 4:
-                self.rect.x-=self.speed
-            if powerup_sprites.has(collisions[1]):
-                curr_powerup = collisions[1].typ
-                collisions[1].kill()
-            if virus_sprites.has(collisions[1]):
-                collisions[1].kill()
-                self.dead = True
+            print(curr_powerup,collisions[1])
+            if not(curr_powerup==1 and virus_sprites.has(collisions[1])):
+                if self.dir == 1:
+                    self.rect.y+=self.speed
+                if self.dir == 2:
+                    self.rect.y-=self.speed
+                if self.dir == 3:
+                    self.rect.x+=self.speed
+                if self.dir == 4:
+                    self.rect.x-=self.speed
+                if powerup_sprites.has(collisions[1]):
+                    curr_powerup = collisions[1].typ
+                    print(curr_powerup)
+                    collisions[1].kill()
+                if virus_sprites.has(collisions[1]):
+                    collisions[1].kill()
+                    self.dead = True
                 
     def update(self):
         if not(self.selectedColor==black):
@@ -214,7 +225,7 @@ class Bed(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.width = self.width-10
         self.rect.height = self.height-25
-        self.image = bedIMG
+        self.image = random.choice(bedIMG)
         # default required medicine color of patient
         self.needcolor = black
         self.needPercentage = float(0)
@@ -443,7 +454,8 @@ while rungame:
     virus2 = virus([(1,6),(3,6),(5,6),(7,6),(8,6)],gameMode)
 
     #5.powerups
-    hanwash = powerup(0,1*blocksize,4*blocksize,5,60)
+    mask1 = powerup(1,1*blocksize,4*blocksize,5,20)
+    handwash1 = powerup(0,8*blocksize,4*blocksize,40,50)
     ###################################################Level Design over##############################################
     
     nurse.add(player_sprites,allSprites)
@@ -453,7 +465,7 @@ while rungame:
         cp.add(cupboard_sprites,allSprites) 
     allSprites.add(virus1,virus2)
     virus_sprites.add(virus1,virus2)
-    hanwash.add(powerup_sprites)
+    powerup_sprites.add(mask1,handwash1)
     # Game loop  
     startticks = pygame.time.get_ticks()
     gamedDone = False
