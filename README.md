@@ -11,5 +11,5 @@ Learning projects for the python module pygame
   Take stuff from respective colored cupboards - stand in front of the cupboard and press <b>action key</b>  
   Avoid the virus and feed the patients - stand to the side of the bed facing the patient and press <b>action key</b>  
 ## Powerups
-  Mask - wearing mask will makes the player unaffected by the virus
+  Mask - wearing mask will makes the player unaffected by the virus  
   Handwash - using handwash will stop the virus in its track
