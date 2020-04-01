@@ -8,7 +8,7 @@ pygame.init()
 pygame.display.set_caption("FG")
 clock = pygame.time.Clock()
 blocksize = 50
-gameheight = blocksize*10
+gameheight = blocksize*12
 gamewidth = blocksize*10
 gameTime = 60 # length of game in seconds
 win = pygame.display.set_mode((gamewidth,gameheight))
@@ -24,9 +24,9 @@ bedbarSpeedarr = [0.1,0.2,0.2]
 curr_powerup = -1
 # Loading images
 base_dir = os.path.abspath(os.path.dirname(__file__))
-file_nameBG = os.path.join(base_dir,"env","hospitalBG.png")
+file_nameBG = os.path.join(base_dir,"env","hospitalBGExtended.png")
 background = pygame.image.load(file_nameBG)
-menuBG = pygame.image.load(os.path.join(base_dir,"env","menuBG.png"))
+menuBG = pygame.image.load(os.path.join(base_dir,"env","menuBG2.png"))
 congotext = pygame.image.load(os.path.join(base_dir,"env","congoText.png"))
 okText = pygame.image.load(os.path.join(base_dir,"env","okText.png"))
 badText = pygame.image.load(os.path.join(base_dir,"env","alldead.png"))
@@ -41,7 +41,10 @@ bedIMG = [pygame.image.load(os.path.join(base_dir,"sprites","bed","bed1.png")),
           pygame.image.load(os.path.join(base_dir,"sprites","bed","bed8.png")),]
 usedbedIMG = []
 coffinIMG = pygame.image.load(os.path.join(base_dir,"sprites","bed","coffin.png"))
-virusIMG = pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50.png"))
+virusIMG = [pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50.png")),
+            pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50_2.png")),
+            pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50_3.png")),
+            pygame.image.load(os.path.join(base_dir,"sprites","virus","virus50_4.png"))]
 cupboardIMG_arr = [pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_white.png")),
                    pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_green.png")),
                    pygame.image.load(os.path.join(base_dir,"sprites","cupboard","cupboard_red.png")),
@@ -141,13 +144,13 @@ class player(pygame.sprite.Sprite):
         freeright = True
         freeup = True
         freedown = True
-        if self.rect.y <= 0:
+        if self.rect.y <= 60:
             freeup = False
         if self.rect.y + self.rect.width >= gameheight-35:
             freedown = False
-        if self.rect.x <= 0+15:
+        if self.rect.x <= 0:
             freeleft = False
-        if self.rect.x + self.rect.width >= gamewidth-20:
+        if self.rect.x + self.rect.width >= gamewidth:
             freeright = False
         
         # Move according to keys. If collision detected, we will reverse the move in the next block 
@@ -308,7 +311,9 @@ class virus(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.height = self.height-25
         self.rect.width = self.width
-        self.image = virusIMG
+        self.movecount = 0
+        self.incr = 1
+        self.image = virusIMG[self.movecount]
         self.path = []
         for i in p:
             self.path.append((i[0]*blocksize,i[1]*blocksize))
@@ -319,6 +324,12 @@ class virus(pygame.sprite.Sprite):
         self.speed = virusSpeedarr[gameMode]
 
     def update(self):
+        self.image = virusIMG[self.movecount//4]
+        if self.movecount == 0:
+            self.incr = 1
+        if self.movecount == 15:
+            self.incr = -1
+        self.movecount+=self.incr
         if (self.nextpoint==(self.rect.x,self.rect.y)):
             if self.path.index((self.rect.x,self.rect.y))==0:
                 self.nextpoint = self.path[1]
@@ -454,24 +465,24 @@ while rungame:
     # 
     ##############################################Level Design#####################################################
     #1. nurse
-    nurse = player(200,200)
+    nurse = player(200,300)
     #2. beds Max 8 beds as there are only 8 spriteimages
     #   If you want to add more beds than 8, comment out the line 'usedbedIMG.append(self.image)' in bed class __init__ function
-    beds  = [Bed((blocksize)*2,(blocksize)*1),
-        Bed((blocksize)*4,(blocksize)*1),
-        Bed((blocksize)*6,(blocksize)*1),   
-        Bed((blocksize)*8,(blocksize)*1)]
+    beds  = [Bed((blocksize)*2,(blocksize)*3),
+        Bed((blocksize)*4,(blocksize)*3),
+        Bed((blocksize)*6,(blocksize)*3),   
+        Bed((blocksize)*8,(blocksize)*3)]
     #3. cupboards
     cupboards = [cupboard(red,blocksize*1.5,gameheight-blocksize-25),
             cupboard(blue,blocksize*4.5,gameheight-blocksize-25),
             cupboard(green,blocksize*7.5,gameheight-blocksize-25)]
     #4. Virus
-    virus1 = virus([(1,3),(3,3),(5,3),(7,3),(8,3)],gameMode)
-    virus2 = virus([(1,6),(3,6),(5,6),(7,6),(8,6)],gameMode)
+    virus1 = virus([(1,5),(3,5),(5,5),(7,5),(8,5)],gameMode)
+    virus2 = virus([(1,8),(3,8),(5,8),(7,8),(8,8)],gameMode)
 
     #5.powerups
-    mask1 = powerup(1,1*blocksize,4*blocksize,5,20)
-    handwash1 = powerup(0,8*blocksize,4*blocksize,40,50)
+    mask1 = powerup(1,1*blocksize,6*blocksize,5,20)
+    handwash1 = powerup(0,8*blocksize,6*blocksize,40,50)
     ###################################################Level Design over##############################################
     
     nurse.add(player_sprites,allSprites)
@@ -555,21 +566,21 @@ while rungame:
     if(patientsSaved!=0 and gamedDone):
         print("quiting")
         if patientsSaved == len(beds):
-            win.blit(congotext,(100,150))
+            win.blit(congotext,(100,250))
             pygame.display.update()
         else:
-            win.blit(okText,(80,150))
+            win.blit(okText,(80,250))
             pygame.display.update()
         quitmenu()
     # 
     # Display message if lose
     elif(patientsSaved == 0):
-        win.blit(badText,(50,150))
+        win.blit(badText,(50,250))
         pygame.display.update()
         quitmenu()
     # player died
     elif nurse.dead:
-        win.blit(deadtext,(80,150))
+        win.blit(deadtext,(80,250))
         pygame.display.update()
         quitmenu()
 # Main loop over
