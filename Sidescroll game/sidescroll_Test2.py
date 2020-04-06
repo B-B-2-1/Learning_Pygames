@@ -142,10 +142,6 @@ while(run):
     pygame.draw.rect(win,(255,255,255),p1.rect)
     for rect in rectangles:
         pygame.draw.rect(win,(255,0,0),rect)
-    # for i in range(0,500,50):
-    #     pygame.draw.line(win,(255,255,255),(i,0),(i,500))
-    # for i in range(0,500,50):
-    #     pygame.draw.line(win,(255,255,255),(0,i),(500,i))
     pygame.display.update()
     
     p1.move_vertical()
