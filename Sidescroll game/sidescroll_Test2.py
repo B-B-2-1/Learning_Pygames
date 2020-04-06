@@ -21,9 +21,9 @@ colors = [green,cyan,violet,yellow,red]
 
 class player():
 
-    height = 50
+    height = 20
     width = 20
-    gravity = 1
+    gravity = 3
     max_v_speed = 20
     max_h_speed = 10
     move_l = False
@@ -52,14 +52,16 @@ class player():
                 elif self.v_speed<=0:
                     self.rect.top = rect.bottom
                     self.v_speed = 0
-            elif self.v_speed<self.max_v_speed:
-                self.v_speed+=self.gravity
+        if not(coll) and self.v_speed<self.max_v_speed:
+            self.v_speed+=self.gravity
         if self.floorcollided == False and coll == True:
+            print(ticks,self.v_speed)
             self.jumpable = True #first floorcoll
             self.wallJumpedRect = 0
             if not((self.h_speed>0 and self.move_r) or (self.h_speed<0 and self.move_l)):
                 self.h_speed = 0
         if self.floorcollided == True and coll == False:
+            print(ticks,self.v_speed)
             self.jumpable = False
         self.floorcollided = coll
 
@@ -97,10 +99,19 @@ class player():
             self.wallcollided = coll
 
 ######################################################################Level Design
-rectangles.append(pygame.Rect(0,200,320,300))
-rectangles.append(pygame.Rect(400,100,100,400))
-rectangles.append(pygame.Rect(0,490,500,10))
-rectangles.append(pygame.Rect(220,50,100,50))
+# rectangles.append(pygame.Rect(0,200,350,300))
+# rectangles.append(pygame.Rect(400,100,100,400))
+# rectangles.append(pygame.Rect(0,490,500,10))
+# rectangles.append(pygame.Rect(220,50,100,50))
+# rectangles.append(pygame.Rect(0,0,50,500))
+rectangles.append(pygame.Rect(50,300,450,200))
+rectangles.append(pygame.Rect(450,50,50,200))
+rectangles.append(pygame.Rect(550,150,300,300))
+rectangles.append(pygame.Rect(550,50,50,100))
+rectangles.append(pygame.Rect(900,400,500,50))
+rectangles.append(pygame.Rect(1050,50,50,300)) 
+rectangles.append(pygame.Rect(1150,50,50,300)) 
+rectangles.append(pygame.Rect(1200,50,500,50)) 
 ##################################################################################
 p1 = player(200,100)
 
