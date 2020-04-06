@@ -1,5 +1,5 @@
 import pygame
-
+import random
 
 screenwidth = 500
 screenheight = 500
@@ -11,6 +11,13 @@ win = pygame.display.set_mode((screenwidth,screenheight))
 clock = pygame.time.Clock()
 
 rectangles = []
+green = (68,255,0)
+cyan = (0,255,222)
+violet = (255,51,153)
+yellow = (255,255,0)
+red = (255,0,0)
+
+colors = [green,cyan,violet,yellow,red]
 
 class player():
 
@@ -99,8 +106,10 @@ p1 = player(200,100)
 
 
 run = True
+ticks = 0
 while(run):
     clock.tick(20)
+    ticks+=1
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -141,7 +150,10 @@ while(run):
     win.fill((0,0,0))
     pygame.draw.rect(win,(255,255,255),p1.rect)
     for rect in rectangles:
-        pygame.draw.rect(win,(255,0,0),rect)
+        if ticks%2 == 0:
+            pygame.draw.rect(win,(0,0,0),rect)
+        else:
+            pygame.draw.rect(win,(random.choice(colors)),rect)
     pygame.display.update()
     
     p1.move_vertical()
