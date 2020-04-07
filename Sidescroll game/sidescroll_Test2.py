@@ -52,8 +52,10 @@ class player():
                 elif self.v_speed<=0:
                     self.rect.top = rect.bottom
                     self.v_speed = 0
-        if not(coll) and self.v_speed<self.max_v_speed:
+        if not(coll):
             self.v_speed+=self.gravity
+        if self.v_speed>self.max_v_speed:
+            self.v_speed = self.max_v_speed
         if self.floorcollided == False and coll == True:
             print(ticks,self.v_speed)
             self.jumpable = True #first floorcoll
@@ -67,7 +69,7 @@ class player():
 
     def move_horizontal(self):
         if self.move_l or self.move_r or not(self.wallcollided or self.floorcollided):
-            self.rect.x+=self.h_speed
+            # self.rect.x+=self.h_speed
             if self.move_l:
                 if self.h_speed>-10:
                     self.h_speed-=1
@@ -78,6 +80,7 @@ class player():
                     self.h_speed+=1
                     if self.h_speed == 0:
                         self.h_speed = 1
+            self.rect.x+=self.h_speed
             coll = False
             for rect in rectangles:
                 if self.rect.colliderect(rect):
@@ -91,6 +94,7 @@ class player():
                 self.jumpable = True#First wall coll
                 self.max_v_speed = 5
             if self.wallcollided == True and coll == False:
+                self.wallJumpedRect = self.collidedRect
                 if not(self.floorcollided):
                     self.jumpable = False
                 self.max_v_speed = 20
